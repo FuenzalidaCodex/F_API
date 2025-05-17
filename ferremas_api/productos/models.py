@@ -109,3 +109,16 @@ class Contacto(models.Model):
         return f"Mensaje de {self.nombre}"
 
 
+class Carrito(models.Model):
+    cliente = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='carrito')
+
+    def __str__(self):
+        return f"Carrito de {self.cliente.username}"
+
+
+class ItemCarrito(models.Model):
+    carrito = models.ForeignKey(Carrito, related_name='items', on_delete=models.CASCADE)
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    cantidad = models.PositiveIntegerField()
+    def __str__(self):
+        return f"{self.cantidad} x {self.producto.nombre} en carrito de {self.carrito.cliente.username}"

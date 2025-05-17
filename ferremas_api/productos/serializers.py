@@ -1,10 +1,13 @@
 from rest_framework import serializers
-from .models import Producto, CustomUser, WebPayTransaction, Contacto
+from .models import Producto, CustomUser, WebPayTransaction, Contacto, Carrito, ItemCarrito
 
 class ProductoSerializer(serializers.ModelSerializer):
+    id_producto = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = Producto
-        fields = '__all__'
+        fields = ['id_producto', 'nombre', 'fabricante', 'precio', 'stock', 'descripcion', 'imagen','fecha_creacion','fecha_actualizacion','fecha_actualizacion_precio']
+
 
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -39,3 +42,34 @@ class ContactoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contacto
         fields = '__all__'
+
+
+class ItemCarritoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ItemCarrito
+        fields = ['id', 'carrito', 'producto', 'cantidad']
+
+class CarritoSerializer(serializers.ModelSerializer):
+    items = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Carrito
+        fields = ['id', 'cliente', 'items']
+
+    def get_items(self, obj):
+        items = obj.items.all()
+        agrupados = {}
+
+        for item in items:
+            key = item.producto.id_producto  # clave única por producto
+            if key in agrupados:
+                agrupados[key]['cantidad'] += item.cantidad
+            else:
+                agrupados[key] = {
+                    'id': item.id,
+                    'carrito': item.carrito.id,
+                    'producto': item.producto.id_producto,
+                    'cantidad': item.cantidad
+                }
+
+        return list(agrupados.values())
