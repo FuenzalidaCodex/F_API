@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.utils import timezone
 
 # Create your models here.
 
@@ -27,6 +28,21 @@ class Producto(models.Model):
     stock = models.IntegerField()
     descripcion = models.TextField(blank=True, null=True)
     imagen = models.ImageField(upload_to="productos", null=True, blank=True)
+
+    fecha_creacion = models.DateTimeField(default=timezone.now)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+    fecha_actualizacion_precio = models.DateTimeField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            # Obtenemos el producto anterior para comparar el precio
+            original = Producto.objects.get(pk=self.pk)
+            if original.precio != self.precio:
+                self.fecha_actualizacion_precio = timezone.now()
+        else:
+            # Si es un nuevo producto, establecemos la fecha de actualización de precio
+            self.fecha_actualizacion_precio = timezone.now()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.nombre
@@ -81,5 +97,15 @@ class WebPayTransaction(models.Model):
 
     def __str__(self):
         return f"Transacción {self.order_id} - {self.status}"
+    
+class Contacto(models.Model):
+    nombre = models.CharField(max_length=100)
+    correo = models.EmailField()
+    telefono = models.CharField(max_length=20, blank=True)
+    mensaje = models.TextField()
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Mensaje de {self.nombre}"
 
 

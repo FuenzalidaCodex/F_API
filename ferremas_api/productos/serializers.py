@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Producto, CustomUser, WebPayTransaction
+from .models import Producto, CustomUser, WebPayTransaction, Contacto
 
 class ProductoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -32,4 +32,10 @@ class CustomUserSerializer(serializers.ModelSerializer):
 class WebPayTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = WebPayTransaction
+        fields = '__all__'
+
+
+class ContactoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contacto
         fields = '__all__'
