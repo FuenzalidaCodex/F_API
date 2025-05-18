@@ -11,6 +11,11 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from transbank.webpay.webpay_plus.transaction import Transaction
+from transbank.common.integration_type import IntegrationType
+
+Transaction.configure_for_testing()  # Para integración
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -40,7 +45,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'productos',
     'corsheaders',
-    'drf_yasg', 
+    'drf_yasg',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -137,4 +143,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [],
     'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.AllowAny'],
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
 }
+
+MERCADOPAGO_ACCESS_TOKEN = 'TEST-2394128164049549-050415-4700c58670e1f71e7684fa30deb4a750-1516554512'

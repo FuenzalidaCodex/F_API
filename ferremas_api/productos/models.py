@@ -84,19 +84,17 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
     
-
 class WebPayTransaction(models.Model):
-    order_id = models.CharField(max_length=100)
-    session_id = models.CharField(max_length=100)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(max_length=50)
-    transaction_date = models.DateTimeField(auto_now_add=True)
-    buy_order = models.CharField(max_length=100)
-    authorization_code = models.CharField(max_length=20, null=True, blank=True)
-    payment_type_code = models.CharField(max_length=10, null=True, blank=True)
+    token = models.CharField(max_length=64, unique=True)
+    buy_order = models.CharField(max_length=26)
+    session_id = models.CharField(max_length=61)
+    amount = models.IntegerField()
+    status = models.CharField(max_length=20, default='INITIALIZED')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Transacción {self.order_id} - {self.status}"
+        return f"Transaction {self.buy_order} - {self.status}"
     
 class Contacto(models.Model):
     nombre = models.CharField(max_length=100)
@@ -117,8 +115,8 @@ class Carrito(models.Model):
 
 
 class ItemCarrito(models.Model):
-    carrito = models.ForeignKey(Carrito, related_name='items', on_delete=models.CASCADE)
+    carrito = models.ForeignKey(Carrito, on_delete=models.CASCADE, related_name="items")
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
-    cantidad = models.PositiveIntegerField()
+    cantidad = models.PositiveIntegerField(default=1)
     def __str__(self):
         return f"{self.cantidad} x {self.producto.nombre} en carrito de {self.carrito.cliente.username}"

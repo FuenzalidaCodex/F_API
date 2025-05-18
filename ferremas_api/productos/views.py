@@ -8,7 +8,22 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import CustomUser
 from rest_framework.decorators import api_view
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import mercadopago
+from django.conf import settings
 
+import requests
+
+import requests
+import uuid
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django_filters.rest_framework import DjangoFilterBackend
 
 
 
@@ -63,14 +78,18 @@ class LoginAPIView(APIView):
         })
 
 
-
 class CarritoViewSet(viewsets.ModelViewSet):
     queryset = Carrito.objects.all()
     serializer_class = CarritoSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['cliente']  # ← esto permite filtrar con ?cliente=ID
+
 
 class ItemCarritoViewSet(viewsets.ModelViewSet):
     queryset = ItemCarrito.objects.all()
     serializer_class = ItemCarritoSerializer
+    filterset_fields = ['carrito']  # ← necesario para filtrar por ?carrito=ID
+
 
 from django.db.utils import IntegrityError
 @api_view(['POST'])
@@ -140,3 +159,125 @@ def listar_items_carrito(request):
     items = ItemCarrito.objects.filter(carrito_id=carrito_id)
     serializer = ItemCarritoSerializer(items, many=True)
     return Response(serializer.data)
+
+
+@api_view(['GET'])
+def convertir_moneda(request):
+    moneda_destino = request.GET.get('moneda', 'USD').upper()
+    tasa = obtener_tasa_conversion_de_clp(moneda_destino)
+    
+    if tasa:
+        return Response({'tasa_conversion': tasa})
+    else:
+        return Response({'error': 'Tasa de conversión no disponible'}, status=status.HTTP_404_NOT_FOUND)
+
+def obtener_tasa_conversion_de_clp(moneda_destino):
+    api_key = "f4b8b0b92ab42e8171840fad"
+    url = f"https://v6.exchangerate-api.com/v6/{api_key}/latest/CLP"
+    
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            return data['conversion_rates'].get(moneda_destino)
+        else:
+            return None
+    except Exception as e:
+        return None
+    
+
+# Configuración de Webpay de prueba (ambiente de integración)
+COMMERCE_CODE = "597055555532"
+API_KEY = "579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C"
+BASE_URL = "https://webpay3gint.transbank.cl/rswebpaytransaction/api/webpay/v1.2"
+# URL a la que WebPay redirige después del pago
+RETURN_URL = "http://127.0.0.1:8001/web/webpay-response"
+
+
+class WebpayCreateManualView(APIView):
+    def post(self, request):
+        try:
+            # Obtener el monto del request o usar un valor por defecto
+            amount = request.data.get("amount", 10000)
+            buy_order = str(uuid.uuid4())[:26]
+            session_id = str(uuid.uuid4())[:61]
+            
+            headers = {
+                "Tbk-Api-Key-Id": COMMERCE_CODE,
+                "Tbk-Api-Key-Secret": API_KEY,
+                "Content-Type": "application/json"
+            }
+            
+            data = {
+                "buy_order": buy_order,
+                "session_id": session_id,
+                "amount": amount,
+                "return_url": RETURN_URL
+            }
+            
+            response = requests.post(f"{BASE_URL}/transactions", json=data, headers=headers)
+            
+            if response.status_code != 200:
+                return Response({
+                    "error": f"{response.status_code} {response.reason} for url: {response.url}"
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            res_json = response.json()
+            
+            # Crear la transacción en la base de datos con los campos correctos
+            transaction = WebPayTransaction(
+                token=res_json["token"],
+                buy_order=buy_order,
+                session_id=session_id,
+                amount=amount,
+                status="INITIALIZED"
+            )
+            transaction.save()
+            
+            return Response({
+                "url": res_json["url"],
+                "token": res_json["token"]
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()  # Imprime el error completo en la consola del servidor
+            return Response({
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class WebpayCommitManualView(APIView):
+    def post(self, request):
+        try:
+            token = request.data.get("token_ws")
+            if not token:
+                return Response({"error": "Token no proporcionado"}, status=status.HTTP_400_BAD_REQUEST)
+                
+            headers = {
+                "Tbk-Api-Key-Id": COMMERCE_CODE,
+                "Tbk-Api-Key-Secret": API_KEY,
+                "Content-Type": "application/json"
+            }
+            
+            response = requests.put(f"{BASE_URL}/transactions/{token}", headers=headers)
+            
+            if response.status_code != 200:
+                return Response({
+                    "error": f"{response.status_code} {response.reason} for url: {response.url}"
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
+            # Actualizar el estado de la transacción en la base de datos
+            try:
+                transaction = WebPayTransaction.objects.get(token=token)
+                transaction.status = "COMPLETED"
+                transaction.save()
+            except WebPayTransaction.DoesNotExist:
+                pass  # Si no existe la transacción, continuar de todos modos
+                
+            return Response(response.json(), status=response.status_code)
+            
+        except Exception as e:
+            return Response({
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

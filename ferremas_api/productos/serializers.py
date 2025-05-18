@@ -50,7 +50,7 @@ class ItemCarritoSerializer(serializers.ModelSerializer):
         fields = ['id', 'carrito', 'producto', 'cantidad']
 
 class CarritoSerializer(serializers.ModelSerializer):
-    items = serializers.SerializerMethodField()
+    items = ItemCarritoSerializer(many=True, read_only=True)
 
     class Meta:
         model = Carrito

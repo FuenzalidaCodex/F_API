@@ -5,10 +5,12 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+from .views import convertir_moneda
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
 from .views import LoginAPIView
+from .views import WebpayCreateManualView, WebpayCommitManualView
 
 router = DefaultRouter()
 router.register(r'productos', ProductoViewSet)
@@ -31,6 +33,9 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('webpay/create/', WebpayCreateManualView.as_view(), name='webpay-create'),
+    path('webpay/commit/', WebpayCommitManualView.as_view(), name='webpay-commit'),
+    path('conversion/', convertir_moneda, name='conversion_moneda'),
     path('crear-carrito/', crear_carrito),
     path('agregar-item/', agregar_item_carrito),
     path('login/', LoginAPIView.as_view(), name='api_login'),
