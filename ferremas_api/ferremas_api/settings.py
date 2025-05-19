@@ -11,10 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-from transbank.webpay.webpay_plus.transaction import Transaction
-from transbank.common.integration_type import IntegrationType
 
-Transaction.configure_for_testing()  # Para integración
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.

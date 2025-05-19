@@ -28,6 +28,7 @@ class Producto(models.Model):
     stock = models.IntegerField()
     descripcion = models.TextField(blank=True, null=True)
     imagen = models.ImageField(upload_to="productos", null=True, blank=True)
+    currency_id = models.CharField(max_length=10, default="CLP")
 
     fecha_creacion = models.DateTimeField(default=timezone.now)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
@@ -84,18 +85,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
     
-class WebPayTransaction(models.Model):
-    token = models.CharField(max_length=64, unique=True)
-    buy_order = models.CharField(max_length=26)
-    session_id = models.CharField(max_length=61)
-    amount = models.IntegerField()
-    status = models.CharField(max_length=20, default='INITIALIZED')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"Transaction {self.buy_order} - {self.status}"
-    
 class Contacto(models.Model):
     nombre = models.CharField(max_length=100)
     correo = models.EmailField()
@@ -120,3 +109,28 @@ class ItemCarrito(models.Model):
     cantidad = models.PositiveIntegerField(default=1)
     def __str__(self):
         return f"{self.cantidad} x {self.producto.nombre} en carrito de {self.carrito.cliente.username}"
+    
+
+class Orden(models.Model):
+    usuario = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='ordenes')
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Orden #{self.id} de {self.usuario.username}"
+
+
+class ItemOrden(models.Model):
+    orden = models.ForeignKey(Orden, on_delete=models.CASCADE, related_name='items')
+    title = models.CharField(max_length=100)
+    description = models.TextField()
+    quantity = models.PositiveIntegerField()
+    currency_id = models.CharField(max_length=10)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.title} (x{self.quantity}) - {self.orden.usuario.username}"
+    
+    
+
+
+

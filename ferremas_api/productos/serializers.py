@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Producto, CustomUser, WebPayTransaction, Contacto, Carrito, ItemCarrito
+from .models import Producto, CustomUser, Contacto, Carrito, ItemCarrito
 
 class ProductoSerializer(serializers.ModelSerializer):
     id_producto = serializers.IntegerField(read_only=True)
@@ -31,12 +31,6 @@ class CustomUserSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
     
-
-class WebPayTransactionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = WebPayTransaction
-        fields = '__all__'
-
 
 class ContactoSerializer(serializers.ModelSerializer):
     class Meta:
