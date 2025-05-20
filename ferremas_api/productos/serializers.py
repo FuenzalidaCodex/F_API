@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Producto, CustomUser, Contacto, Carrito, ItemCarrito
+from .models import Producto, CustomUser, Contacto, Carrito, ItemCarrito, ItemBoleta, Boleta
 
 class ProductoSerializer(serializers.ModelSerializer):
     id_producto = serializers.IntegerField(read_only=True)
@@ -67,3 +67,17 @@ class CarritoSerializer(serializers.ModelSerializer):
                 }
 
         return list(agrupados.values())
+    
+    
+class ItemBoletaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ItemBoleta
+        fields = ['producto', 'cantidad', 'precio_unitario']
+
+class BoletaSerializer(serializers.ModelSerializer):
+    items = ItemBoletaSerializer(many=True, read_only=True)
+    cliente = serializers.StringRelatedField()  # o CustomUserSerializer si quieres más info
+
+    class Meta:
+        model = Boleta
+        fields = ['id', 'cliente', 'fecha', 'total', 'stripe_session_id', 'items']

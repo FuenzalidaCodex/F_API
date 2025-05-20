@@ -142,5 +142,3 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.AllowAny'],
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
 }
-
-MERCADOPAGO_ACCESS_TOKEN = 'TEST-2394128164049549-050415-4700c58670e1f71e7684fa30deb4a750-1516554512'

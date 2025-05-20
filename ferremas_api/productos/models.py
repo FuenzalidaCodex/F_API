@@ -130,6 +130,19 @@ class ItemOrden(models.Model):
     def __str__(self):
         return f"{self.title} (x{self.quantity}) - {self.orden.usuario.username}"
     
+
+class Boleta(models.Model):
+    cliente = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    fecha = models.DateTimeField(auto_now_add=True)
+    total = models.DecimalField(max_digits=10, decimal_places=2)
+    stripe_session_id = models.CharField(max_length=255, blank=True, null=True)
+
+class ItemBoleta(models.Model):
+    boleta = models.ForeignKey(Boleta, related_name='items', on_delete=models.CASCADE)
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    cantidad = models.PositiveIntegerField()
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+    
     
 
 
