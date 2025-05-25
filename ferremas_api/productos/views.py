@@ -286,8 +286,8 @@ def crear_sesion_pago(request):
             payment_method_types=['card'],
             line_items=line_items,
             mode='payment',
-            success_url='http://localhost:8001/exito/',
-            cancel_url='http://localhost:8001/cancelado/',
+            success_url=f"{settings.API_URL}/exito/",
+            cancel_url=f"{settings.API_URL}/cancelado/",
             metadata={
                 'cliente_id': str(request.data.get('cliente_id')) 
             }
