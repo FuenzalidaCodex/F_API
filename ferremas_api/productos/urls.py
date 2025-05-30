@@ -22,7 +22,8 @@ from .views import (
     StripeLineItemsView,
     stripe_webhook,
     BoletaViewSet,
-    admin_view
+    admin_view,
+    enviar_email_con_emailjs
 )
 
 router = DefaultRouter()
@@ -48,6 +49,7 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('enviar-correo/', enviar_email_con_emailjs),
     path("get-url/", api_url_view),
     path('admin-usuarios/', admin_view, name='admin_usuarios'),
     path('webhook/stripe/', stripe_webhook, name='stripe-webhook'),
